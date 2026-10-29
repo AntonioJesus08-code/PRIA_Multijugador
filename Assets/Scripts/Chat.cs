@@ -1,35 +1,52 @@
-using System.Collections.Generic; // List
+using System; // DateTime
+using System.Collections.Generic;
 using UnityEngine;
-using Photon.Pun; // MonoBehaviourPun, PunRPC, RpcTarget
+using UnityEngine.UI; // Toggle
+using Photon.Pun;
+using ExitGames.Client.Photon; // PhotonPeer
 using TMPro;
 // Chat de la sala. El objeto que lleva este script necesita un PhotonView.
 public class Chat : MonoBehaviourPun
 {
     [SerializeField] private TMP_InputField mensajeInput;
     [SerializeField] private TMP_Text chatText;
+    [SerializeField] private Toggle importanteToggle; // G07
     private const int MaxLineas = 8;
     private readonly List<string> lineas = new List<string>();
+    private void Awake() // G07
+    {
+        // Registramos el tipo con un código de un byte que no use Photon.
+        // PUN ya usa 16, 17, 22 y 23; Photon recomienda elegir desde 255 hacia abajo.
+        PhotonPeer.RegisterType(typeof(MensajeChat), 255,
+        MensajeChat.Serializar, MensajeChat.Deserializar);
+    }
     // Botón «Enviar»
     public void Enviar()
     {
         string texto = mensajeInput.text.Trim();
         if (texto.Length == 0 || !PhotonNetwork.InRoom) return;
-        // Pedimos a Photon que ejecute RecibirMensaje en TODOS los jugadores de la sala.
-        photonView.RPC(nameof(RecibirMensaje), RpcTarget.All, texto);
+        MensajeChat mensaje = new MensajeChat(); // G07
+        mensaje.Texto = texto;
+        mensaje.Hora = DateTime.Now.ToString("HH:mm");
+        mensaje.Importante = importanteToggle.isOn;
+        photonView.RPC(nameof(RecibirMensaje), RpcTarget.All, mensaje);
         mensajeInput.text = "";
-        mensajeInput.ActivateInputField(); // el cursor vuelve al campo
+        mensajeInput.ActivateInputField();
     }
-    // [PunRPC] marca el método como «se puede llamar por la red».
-    // El último parámetro, PhotonMessageInfo, lo rellena Photon: quién lo envió y cuándo.
     [PunRPC]
-    private void RecibirMensaje(string texto, PhotonMessageInfo info)
+    private void RecibirMensaje(MensajeChat mensaje, PhotonMessageInfo info) // G07
     {
-        Escribir(info.Sender.NickName + ": " + texto);
+        string linea = "[" + mensaje.Hora + "] " + info.Sender.NickName + ": " + mensaje.Texto;
+        if (mensaje.Importante)
+        {
+            linea = "<b><color=#E74C3C>" + linea + "</color></b>"; // texto enriquecido de TMP
+        }
+        Escribir(linea);
     }
     private void Escribir(string linea)
     {
         lineas.Add(linea);
-        if (lineas.Count > MaxLineas) lineas.RemoveAt(0); // solo las últimas
+        if (lineas.Count > MaxLineas) lineas.RemoveAt(0);
         chatText.text = string.Join("\n", lineas);
     }
 }
