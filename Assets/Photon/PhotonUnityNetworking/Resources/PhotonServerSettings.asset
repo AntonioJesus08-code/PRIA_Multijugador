@@ -41,6 +41,11 @@ MonoBehaviour:
   - Fire
   - RespawnSpaceship
   - RecibirMensaje
+  - CmdPulsar
+  - RpcAnunciarGanador
+  - RpcRondaEmpieza
+  - CmdReiniciarPuntos
+  - RpcAnunciarReinicio
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0

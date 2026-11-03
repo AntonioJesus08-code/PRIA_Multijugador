@@ -62,6 +62,11 @@ public class ListaJugadores : MonoBehaviourPunCallbacks
         {
             linea += " · LISTO";
         }
+        if (jugador.CustomProperties.TryGetValue("puntos", out object puntos)) // G08
+        {
+            linea += " · " + (int)puntos + " pts";
+        }
         return linea;
     }
+
 }
